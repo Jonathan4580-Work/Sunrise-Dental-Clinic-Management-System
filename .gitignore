@@ -1,0 +1,26 @@
+# Maven build output
+target/
+
+# NetBeans generated files
+build/
+dist/
+nbbuild/
+nbdist/
+nbactions.xml
+nb-configuration.xml
+nbproject/private/
+
+# Compiled Java files
+*.class
+
+# Other IDE settings
+.idea/
+.vscode/
+*.iml
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log

@@ -1,16 +1,24 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
 package com.mycompany.sunrisedentalclinicmanagementsystem;
 
+import com.mycompany.sunrisedentalclinicmanagementsystem.service.AuthenticationService;
+import com.mycompany.sunrisedentalclinicmanagementsystem.ui.LoginFrame;
+import javax.swing.SwingUtilities;
+
 /**
- *
- * @author jonat_n31h
+ * Application entry point for the Sunrise Dental Clinic Management System.
  */
-public class SunriseDentalClinicManagementSystem {
+public final class SunriseDentalClinicManagementSystem {
+
+    private SunriseDentalClinicManagementSystem() {
+        // Prevent creation of the application entry-point class.
+    }
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        SwingUtilities.invokeLater(() -> {
+            AuthenticationService authenticationService
+                    = new AuthenticationService();
+            LoginFrame loginFrame = new LoginFrame(authenticationService);
+            loginFrame.setVisible(true);
+        });
     }
 }

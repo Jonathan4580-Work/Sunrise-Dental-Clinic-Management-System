@@ -15,6 +15,7 @@ import java.awt.image.BufferedImage;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -60,6 +61,8 @@ public final class DashboardFrame extends JFrame {
     private static final DateTimeFormatter TIME_FORMATTER
             = DateTimeFormatter.ofPattern("hh:mm:ss a");
 
+    private final Runnable logoutAction;
+
     private JLabel currentDateLabel;
     private JLabel currentTimeLabel;
     private JButton registerAppointmentButton;
@@ -73,8 +76,15 @@ public final class DashboardFrame extends JFrame {
 
     /**
      * Creates and arranges the clinic management dashboard.
+     *
+     * @param logoutAction action invoked after the dashboard closes on logout
      */
-    public DashboardFrame() {
+    public DashboardFrame(Runnable logoutAction) {
+        this.logoutAction = Objects.requireNonNull(
+                logoutAction,
+                "logoutAction must not be null"
+        );
+
         initializeComponents();
 
         JPanel dashboardPanel = new JPanel(new BorderLayout());
@@ -271,7 +281,7 @@ public final class DashboardFrame extends JFrame {
         reportsButton.addActionListener(event ->
                 showComingSoonDialog("Reports"));
         helpButton.addActionListener(event -> showHelpDialog());
-        logoutButton.addActionListener(event -> dispose());
+        logoutButton.addActionListener(event -> handleLogout());
         exitButton.addActionListener(event -> handleExit());
 
         addWindowListener(new WindowAdapter() {
@@ -371,6 +381,11 @@ public final class DashboardFrame extends JFrame {
                 "Help",
                 JOptionPane.INFORMATION_MESSAGE
         );
+    }
+
+    private void handleLogout() {
+        dispose();
+        logoutAction.run();
     }
 
     private void handleExit() {

@@ -47,6 +47,7 @@ public final class LoginFrame extends JFrame {
     private static final Font BUTTON_FONT = new Font("SansSerif", Font.BOLD, 14);
 
     private final AuthenticationService authenticationService;
+    private final Runnable authenticationSuccessAction;
 
     private JLabel clinicTitleLabel;
     private JLabel subtitleLabel;
@@ -63,11 +64,19 @@ public final class LoginFrame extends JFrame {
      * Creates a login window backed by the supplied authentication service.
      *
      * @param authenticationService service used to validate staff credentials
+     * @param authenticationSuccessAction action invoked after valid credentials
      */
-    public LoginFrame(AuthenticationService authenticationService) {
+    public LoginFrame(
+            AuthenticationService authenticationService,
+            Runnable authenticationSuccessAction
+    ) {
         this.authenticationService = Objects.requireNonNull(
                 authenticationService,
                 "authenticationService must not be null"
+        );
+        this.authenticationSuccessAction = Objects.requireNonNull(
+                authenticationSuccessAction,
+                "authenticationSuccessAction must not be null"
         );
 
         initializeComponents();
@@ -205,12 +214,8 @@ public final class LoginFrame extends JFrame {
         clearPasswordCharacters(passwordCharacters);
 
         if (authenticationService.authenticate(username, password)) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Login Successful",
-                    "Authentication Successful",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+            dispose();
+            authenticationSuccessAction.run();
             return;
         }
 

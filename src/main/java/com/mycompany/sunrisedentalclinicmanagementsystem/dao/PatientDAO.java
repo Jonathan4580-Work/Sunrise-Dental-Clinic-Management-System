@@ -32,6 +32,17 @@ public final class PatientDAO {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
+    private static final String UPDATE_PATIENT_SQL = """
+            UPDATE patients
+            SET first_name = ?,
+                last_name = ?,
+                address_line_1 = ?,
+                address_line_2 = ?,
+                city = ?,
+                phone = ?
+            WHERE patient_id = ?
+            """;
+
     /**
      * Inserts a patient using a connection owned by this method.
      *
@@ -87,6 +98,26 @@ public final class PatientDAO {
                 patient.setPatientId(patientId);
                 return patientId;
             }
+        }
+    }
+
+    /**
+     * Updates only appointment-management patient fields in an external
+     * transaction.
+     */
+    public boolean update(Connection connection, Patient patient)
+            throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                UPDATE_PATIENT_SQL
+        )) {
+            statement.setString(1, patient.getFirstName());
+            statement.setString(2, patient.getLastName());
+            statement.setString(3, patient.getAddressLine1());
+            statement.setString(4, patient.getAddressLine2());
+            statement.setString(5, patient.getCity());
+            statement.setString(6, patient.getPhone());
+            statement.setLong(7, patient.getPatientId());
+            return statement.executeUpdate() == 1;
         }
     }
 

@@ -25,6 +25,14 @@ public final class DentistDAO {
             ORDER BY full_name ASC
             """;
 
+    private static final String IS_ACTIVE_DENTIST_SQL = """
+            SELECT 1
+            FROM dentists
+            WHERE dentist_id = ?
+              AND is_active = TRUE
+            LIMIT 1
+            """;
+
     public List<Dentist> findAllActive() throws SQLException {
         List<Dentist> dentists = new ArrayList<>();
 
@@ -45,5 +53,20 @@ public final class DentistDAO {
         }
 
         return dentists;
+    }
+
+    /**
+     * Checks a dentist selection within an externally managed transaction.
+     */
+    public boolean isActive(Connection connection, long dentistId)
+            throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                IS_ACTIVE_DENTIST_SQL
+        )) {
+            statement.setLong(1, dentistId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
     }
 }

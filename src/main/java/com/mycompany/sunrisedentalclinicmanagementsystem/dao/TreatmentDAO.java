@@ -26,6 +26,14 @@ public final class TreatmentDAO {
             ORDER BY treatment_name ASC
             """;
 
+    private static final String IS_ACTIVE_TREATMENT_SQL = """
+            SELECT 1
+            FROM treatments
+            WHERE treatment_id = ?
+              AND is_active = TRUE
+            LIMIT 1
+            """;
+
     public List<Treatment> findAllActive() throws SQLException {
         List<Treatment> treatments = new ArrayList<>();
 
@@ -47,5 +55,20 @@ public final class TreatmentDAO {
         }
 
         return treatments;
+    }
+
+    /**
+     * Checks a treatment selection within an externally managed transaction.
+     */
+    public boolean isActive(Connection connection, long treatmentId)
+            throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                IS_ACTIVE_TREATMENT_SQL
+        )) {
+            statement.setLong(1, treatmentId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
     }
 }

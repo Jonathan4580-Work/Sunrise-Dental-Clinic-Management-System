@@ -39,10 +39,24 @@ public final class NavigationController {
         });
     }
 
-    private void showDashboard() {
+    private void showDashboard(String authenticatedUsername) {
         runOnEventDispatchThread(() -> {
-            DashboardFrame dashboardFrame = new DashboardFrame(this::showLogin);
+            DashboardFrame dashboardFrame = new DashboardFrame(
+                    () -> showRegisterAppointment(authenticatedUsername),
+                    this::showLogin
+            );
             dashboardFrame.setVisible(true);
+        });
+    }
+
+    private void showRegisterAppointment(String authenticatedUsername) {
+        runOnEventDispatchThread(() -> {
+            RegisterAppointmentController registrationController
+                    = new RegisterAppointmentController(
+                            authenticatedUsername,
+                            () -> showDashboard(authenticatedUsername)
+                    );
+            registrationController.show();
         });
     }
 

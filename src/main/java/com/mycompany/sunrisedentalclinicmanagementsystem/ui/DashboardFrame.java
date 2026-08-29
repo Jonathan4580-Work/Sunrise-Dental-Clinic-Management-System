@@ -61,6 +61,7 @@ public final class DashboardFrame extends JFrame {
     private static final DateTimeFormatter TIME_FORMATTER
             = DateTimeFormatter.ofPattern("hh:mm:ss a");
 
+    private final Runnable registerAppointmentAction;
     private final Runnable logoutAction;
 
     private JLabel currentDateLabel;
@@ -77,9 +78,17 @@ public final class DashboardFrame extends JFrame {
     /**
      * Creates and arranges the clinic management dashboard.
      *
+     * @param registerAppointmentAction action that opens appointment registration
      * @param logoutAction action invoked after the dashboard closes on logout
      */
-    public DashboardFrame(Runnable logoutAction) {
+    public DashboardFrame(
+            Runnable registerAppointmentAction,
+            Runnable logoutAction
+    ) {
+        this.registerAppointmentAction = Objects.requireNonNull(
+                registerAppointmentAction,
+                "registerAppointmentAction must not be null"
+        );
         this.logoutAction = Objects.requireNonNull(
                 logoutAction,
                 "logoutAction must not be null"
@@ -273,7 +282,7 @@ public final class DashboardFrame extends JFrame {
      */
     private void registerEvents() {
         registerAppointmentButton.addActionListener(event ->
-                showComingSoonDialog("Register Appointment"));
+                handleRegisterAppointment());
         searchAppointmentButton.addActionListener(event ->
                 showComingSoonDialog("Search Appointment"));
         billingButton.addActionListener(event ->
@@ -290,6 +299,11 @@ public final class DashboardFrame extends JFrame {
                 handleExit();
             }
         });
+    }
+
+    private void handleRegisterAppointment() {
+        dispose();
+        registerAppointmentAction.run();
     }
 
     private JPanel createStatisticCard(String title, String value, Color accentColor) {

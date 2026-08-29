@@ -8,8 +8,11 @@ import com.mycompany.sunrisedentalclinicmanagementsystem.service.AppointmentRegi
 import com.mycompany.sunrisedentalclinicmanagementsystem.service.AppointmentRegistrationRequest;
 import com.mycompany.sunrisedentalclinicmanagementsystem.service.AppointmentRegistrationService;
 import com.mycompany.sunrisedentalclinicmanagementsystem.ui.RegisterAppointmentFrame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import javax.swing.SwingUtilities;
@@ -26,21 +29,28 @@ public final class RegisterAppointmentController {
     private final DentistDAO dentistDAO;
     private final TreatmentDAO treatmentDAO;
     private final String authenticatedUsername;
+    private final Runnable returnToDashboardAction;
 
     private boolean referenceDataLoaded;
+    private boolean returningToDashboard;
 
     /**
      * Creates the appointment-registration feature for the current staff user.
      *
      * @param authenticatedUsername username that will own the audit record
+     * @param returnToDashboardAction action invoked when registration closes
      */
-    public RegisterAppointmentController(String authenticatedUsername) {
+    public RegisterAppointmentController(
+            String authenticatedUsername,
+            Runnable returnToDashboardAction
+    ) {
         this(
                 new RegisterAppointmentFrame(),
                 new AppointmentRegistrationService(),
                 new DentistDAO(),
                 new TreatmentDAO(),
-                authenticatedUsername
+                authenticatedUsername,
+                returnToDashboardAction
         );
     }
 
@@ -49,7 +59,8 @@ public final class RegisterAppointmentController {
             AppointmentRegistrationService registrationService,
             DentistDAO dentistDAO,
             TreatmentDAO treatmentDAO,
-            String authenticatedUsername
+            String authenticatedUsername,
+            Runnable returnToDashboardAction
     ) {
         this.frame = Objects.requireNonNull(frame, "frame must not be null");
         this.registrationService = Objects.requireNonNull(
@@ -67,6 +78,10 @@ public final class RegisterAppointmentController {
         this.authenticatedUsername = Objects.requireNonNull(
                 authenticatedUsername,
                 "authenticatedUsername must not be null"
+        );
+        this.returnToDashboardAction = Objects.requireNonNull(
+                returnToDashboardAction,
+                "returnToDashboardAction must not be null"
         );
 
         registerEvents();
@@ -93,8 +108,14 @@ public final class RegisterAppointmentController {
             frame.clearForm();
             frame.setStatus("Ready", false);
         });
-        frame.addCancelListener(event -> frame.dispose());
+        frame.addCancelListener(event -> returnToDashboard());
         frame.addTreatmentSelectionListener(event -> updateTreatmentPrice());
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent event) {
+                returnToDashboard();
+            }
+        });
     }
 
     private void loadReferenceData() {
@@ -152,8 +173,12 @@ public final class RegisterAppointmentController {
                 try {
                     get();
                     frame.setBusy(false, "Appointment registered successfully.");
+                    String appointmentNumber = request.appointmentNumber()
+                            .trim()
+                            .toUpperCase(Locale.ROOT);
                     frame.showSuccessMessage(
-                            "Appointment registered successfully."
+                            "Appointment registered successfully.\n\n"
+                                    + "Appointment Number: " + appointmentNumber
                     );
                     frame.clearForm();
                     frame.setStatus("Ready", false);
@@ -236,18 +261,20 @@ public final class RegisterAppointmentController {
         );
     }
 
+    private void returnToDashboard() {
+        if (returningToDashboard) {
+            return;
+        }
+
+        returningToDashboard = true;
+        frame.dispose();
+        returnToDashboardAction.run();
+    }
+
     private record ReferenceData(
             List<Dentist> dentists,
             List<Treatment> treatments
     ) {
     }
 
-    /**
-     * Development preview entry point. It does not alter the main application
-     * startup flow.
-     */
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() ->
-                new RegisterAppointmentController("admin").show());
-    }
 }

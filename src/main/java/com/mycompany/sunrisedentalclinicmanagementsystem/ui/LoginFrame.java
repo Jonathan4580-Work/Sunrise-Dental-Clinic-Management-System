@@ -16,6 +16,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -47,7 +48,7 @@ public final class LoginFrame extends JFrame {
     private static final Font BUTTON_FONT = new Font("SansSerif", Font.BOLD, 14);
 
     private final AuthenticationService authenticationService;
-    private final Runnable authenticationSuccessAction;
+    private final Consumer<String> authenticationSuccessAction;
 
     private JLabel clinicTitleLabel;
     private JLabel subtitleLabel;
@@ -68,7 +69,7 @@ public final class LoginFrame extends JFrame {
      */
     public LoginFrame(
             AuthenticationService authenticationService,
-            Runnable authenticationSuccessAction
+            Consumer<String> authenticationSuccessAction
     ) {
         this.authenticationService = Objects.requireNonNull(
                 authenticationService,
@@ -215,7 +216,7 @@ public final class LoginFrame extends JFrame {
 
         if (authenticationService.authenticate(username, password)) {
             dispose();
-            authenticationSuccessAction.run();
+            authenticationSuccessAction.accept(username);
             return;
         }
 

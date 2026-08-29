@@ -414,11 +414,4 @@ public final class AppointmentManagementController {
     ) {
     }
 
-    /**
-     * Development preview entry point; it does not change application startup.
-     */
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() ->
-                new AppointmentManagementController(() -> { }).show());
-    }
 }

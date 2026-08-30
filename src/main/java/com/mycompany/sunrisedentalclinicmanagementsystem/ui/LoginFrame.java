@@ -13,6 +13,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.Objects;
@@ -90,7 +92,7 @@ public final class LoginFrame extends JFrame {
      */
     private void initializeComponents() {
         setTitle("Sunrise Dental Clinic Management System");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setResizable(false);
         setIconImage(createApplicationIcon());
 
@@ -192,6 +194,12 @@ public final class LoginFrame extends JFrame {
         loginButton.addActionListener(event -> handleLogin());
         passwordField.addActionListener(event -> handleLogin());
         exitButton.addActionListener(event -> handleExit());
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent event) {
+                handleExit();
+            }
+        });
     }
 
     private void handleLogin() {
@@ -234,7 +242,7 @@ public final class LoginFrame extends JFrame {
     private void handleExit() {
         int selectedOption = JOptionPane.showConfirmDialog(
                 this,
-                "Are you sure you want to exit the application?",
+                "Are you sure you want to exit the system?",
                 "Confirm Exit",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE

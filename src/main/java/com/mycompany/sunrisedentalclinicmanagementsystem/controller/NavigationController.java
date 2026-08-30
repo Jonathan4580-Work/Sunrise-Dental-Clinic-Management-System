@@ -2,6 +2,7 @@ package com.mycompany.sunrisedentalclinicmanagementsystem.controller;
 
 import com.mycompany.sunrisedentalclinicmanagementsystem.service.AuthenticationService;
 import com.mycompany.sunrisedentalclinicmanagementsystem.ui.DashboardFrame;
+import com.mycompany.sunrisedentalclinicmanagementsystem.ui.HelpFrame;
 import com.mycompany.sunrisedentalclinicmanagementsystem.ui.LoginFrame;
 import java.util.Objects;
 import javax.swing.SwingUtilities;
@@ -45,6 +46,7 @@ public final class NavigationController {
                     () -> showRegisterAppointment(authenticatedUsername),
                     () -> showManageAppointment(authenticatedUsername),
                     () -> showBilling(authenticatedUsername),
+                    () -> showHelp(authenticatedUsername),
                     this::showLogin
             );
             dashboardFrame.setVisible(true);
@@ -79,6 +81,15 @@ public final class NavigationController {
                     () -> showDashboard(authenticatedUsername)
             );
             billingController.show();
+        });
+    }
+
+    private void showHelp(String authenticatedUsername) {
+        runOnEventDispatchThread(() -> {
+            HelpFrame helpFrame = new HelpFrame(
+                    () -> showDashboard(authenticatedUsername)
+            );
+            helpFrame.setVisible(true);
         });
     }
 

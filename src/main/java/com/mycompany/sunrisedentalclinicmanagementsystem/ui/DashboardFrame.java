@@ -64,6 +64,7 @@ public final class DashboardFrame extends JFrame {
     private final Runnable registerAppointmentAction;
     private final Runnable manageAppointmentAction;
     private final Runnable billingAction;
+    private final Runnable helpAction;
     private final Runnable logoutAction;
 
     private JLabel currentDateLabel;
@@ -83,12 +84,14 @@ public final class DashboardFrame extends JFrame {
      * @param registerAppointmentAction action that opens appointment registration
      * @param manageAppointmentAction action that opens appointment management
      * @param billingAction action that opens patient billing
+     * @param helpAction action that opens the staff help guide
      * @param logoutAction action invoked after the dashboard closes on logout
      */
     public DashboardFrame(
             Runnable registerAppointmentAction,
             Runnable manageAppointmentAction,
             Runnable billingAction,
+            Runnable helpAction,
             Runnable logoutAction
     ) {
         this.registerAppointmentAction = Objects.requireNonNull(
@@ -102,6 +105,10 @@ public final class DashboardFrame extends JFrame {
         this.billingAction = Objects.requireNonNull(
                 billingAction,
                 "billingAction must not be null"
+        );
+        this.helpAction = Objects.requireNonNull(
+                helpAction,
+                "helpAction must not be null"
         );
         this.logoutAction = Objects.requireNonNull(
                 logoutAction,
@@ -303,7 +310,7 @@ public final class DashboardFrame extends JFrame {
                 handleBilling());
         reportsButton.addActionListener(event ->
                 showComingSoonDialog("Reports"));
-        helpButton.addActionListener(event -> showHelpDialog());
+        helpButton.addActionListener(event -> handleHelp());
         logoutButton.addActionListener(event -> handleLogout());
         exitButton.addActionListener(event -> handleExit());
 
@@ -328,6 +335,11 @@ public final class DashboardFrame extends JFrame {
     private void handleBilling() {
         dispose();
         billingAction.run();
+    }
+
+    private void handleHelp() {
+        dispose();
+        helpAction.run();
     }
 
     private JPanel createStatisticCard(String title, String value, Color accentColor) {
@@ -410,17 +422,6 @@ public final class DashboardFrame extends JFrame {
         );
     }
 
-    private void showHelpDialog() {
-        JOptionPane.showMessageDialog(
-                this,
-                "Sunrise Dental Clinic Management System\n\n"
-                        + "Use the sidebar to access clinic management features.\n"
-                        + "The available modules will be implemented in future stages.",
-                "Help",
-                JOptionPane.INFORMATION_MESSAGE
-        );
-    }
-
     private void handleLogout() {
         dispose();
         logoutAction.run();
@@ -429,7 +430,7 @@ public final class DashboardFrame extends JFrame {
     private void handleExit() {
         int selectedOption = JOptionPane.showConfirmDialog(
                 this,
-                "Are you sure you want to exit the application?",
+                "Are you sure you want to exit the system?",
                 "Confirm Exit",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE

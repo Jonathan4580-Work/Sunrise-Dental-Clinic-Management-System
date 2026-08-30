@@ -103,6 +103,12 @@ public final class AppointmentDAO {
             WHERE a.appointment_number = ?
             """;
 
+    private static final String FIND_DETAILS_BY_NUMBER_FOR_UPDATE_SQL
+            = APPOINTMENT_DETAILS_SELECT_SQL + """
+            WHERE a.appointment_number = ?
+            FOR UPDATE
+            """;
+
     private static final String FIND_DETAILS_BY_ID_FOR_UPDATE_SQL
             = APPOINTMENT_DETAILS_SELECT_SQL + """
             WHERE a.appointment_id = ?
@@ -146,13 +152,37 @@ public final class AppointmentDAO {
     public Optional<AppointmentDetails> findDetailsByAppointmentNumber(
             String appointmentNumber
     ) throws SQLException {
-        try (Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(
-                        FIND_DETAILS_BY_NUMBER_SQL
-                )) {
-            statement.setString(1, appointmentNumber);
-            return readAppointmentDetails(statement);
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            return findDetailsByAppointmentNumber(connection, appointmentNumber);
         }
+    }
+
+    /**
+     * Finds appointment details using an externally managed connection.
+     */
+    public Optional<AppointmentDetails> findDetailsByAppointmentNumber(
+            Connection connection,
+            String appointmentNumber
+    ) throws SQLException {
+        return findDetailsByAppointmentNumber(
+                connection,
+                FIND_DETAILS_BY_NUMBER_SQL,
+                appointmentNumber
+        );
+    }
+
+    /**
+     * Finds and locks an appointment while a bill is generated for it.
+     */
+    public Optional<AppointmentDetails> findDetailsByAppointmentNumberForUpdate(
+            Connection connection,
+            String appointmentNumber
+    ) throws SQLException {
+        return findDetailsByAppointmentNumber(
+                connection,
+                FIND_DETAILS_BY_NUMBER_FOR_UPDATE_SQL,
+                appointmentNumber
+        );
     }
 
     /**
@@ -439,6 +469,17 @@ public final class AppointmentDAO {
                     resultSet.getString("created_by_full_name"),
                     resultSet.getTimestamp("updated_at").toLocalDateTime()
             ));
+        }
+    }
+
+    private Optional<AppointmentDetails> findDetailsByAppointmentNumber(
+            Connection connection,
+            String sql,
+            String appointmentNumber
+    ) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, appointmentNumber);
+            return readAppointmentDetails(statement);
         }
     }
 }

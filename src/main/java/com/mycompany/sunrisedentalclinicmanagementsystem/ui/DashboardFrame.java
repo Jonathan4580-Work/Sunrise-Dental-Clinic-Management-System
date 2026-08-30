@@ -63,6 +63,7 @@ public final class DashboardFrame extends JFrame {
 
     private final Runnable registerAppointmentAction;
     private final Runnable manageAppointmentAction;
+    private final Runnable billingAction;
     private final Runnable logoutAction;
 
     private JLabel currentDateLabel;
@@ -81,11 +82,13 @@ public final class DashboardFrame extends JFrame {
      *
      * @param registerAppointmentAction action that opens appointment registration
      * @param manageAppointmentAction action that opens appointment management
+     * @param billingAction action that opens patient billing
      * @param logoutAction action invoked after the dashboard closes on logout
      */
     public DashboardFrame(
             Runnable registerAppointmentAction,
             Runnable manageAppointmentAction,
+            Runnable billingAction,
             Runnable logoutAction
     ) {
         this.registerAppointmentAction = Objects.requireNonNull(
@@ -95,6 +98,10 @@ public final class DashboardFrame extends JFrame {
         this.manageAppointmentAction = Objects.requireNonNull(
                 manageAppointmentAction,
                 "manageAppointmentAction must not be null"
+        );
+        this.billingAction = Objects.requireNonNull(
+                billingAction,
+                "billingAction must not be null"
         );
         this.logoutAction = Objects.requireNonNull(
                 logoutAction,
@@ -293,7 +300,7 @@ public final class DashboardFrame extends JFrame {
         searchAppointmentButton.addActionListener(event ->
                 handleManageAppointment());
         billingButton.addActionListener(event ->
-                showComingSoonDialog("Billing"));
+                handleBilling());
         reportsButton.addActionListener(event ->
                 showComingSoonDialog("Reports"));
         helpButton.addActionListener(event -> showHelpDialog());
@@ -316,6 +323,11 @@ public final class DashboardFrame extends JFrame {
     private void handleManageAppointment() {
         dispose();
         manageAppointmentAction.run();
+    }
+
+    private void handleBilling() {
+        dispose();
+        billingAction.run();
     }
 
     private JPanel createStatisticCard(String title, String value, Color accentColor) {

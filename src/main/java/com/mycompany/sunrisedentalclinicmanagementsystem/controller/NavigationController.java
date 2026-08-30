@@ -44,6 +44,7 @@ public final class NavigationController {
             DashboardFrame dashboardFrame = new DashboardFrame(
                     () -> showRegisterAppointment(authenticatedUsername),
                     () -> showManageAppointment(authenticatedUsername),
+                    () -> showBilling(authenticatedUsername),
                     this::showLogin
             );
             dashboardFrame.setVisible(true);
@@ -68,6 +69,16 @@ public final class NavigationController {
                             () -> showDashboard(authenticatedUsername)
                     );
             managementController.show();
+        });
+    }
+
+    private void showBilling(String authenticatedUsername) {
+        runOnEventDispatchThread(() -> {
+            BillingController billingController = new BillingController(
+                    authenticatedUsername,
+                    () -> showDashboard(authenticatedUsername)
+            );
+            billingController.show();
         });
     }
 

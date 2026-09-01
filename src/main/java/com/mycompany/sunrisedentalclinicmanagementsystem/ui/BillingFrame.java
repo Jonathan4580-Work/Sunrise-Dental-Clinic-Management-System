@@ -93,14 +93,17 @@ public final class BillingFrame extends JFrame {
     private JTextField finalTotalField;
 
     private JTextArea receiptTextArea;
+    private JTextField recipientEmailField;
     private JButton generateBillButton;
     private JButton clearButton;
     private JButton backButton;
     private JButton printReceiptButton;
+    private JButton emailReceiptButton;
 
     private boolean calculationLoaded;
     private boolean billGenerated;
     private boolean receiptPrintable;
+    private boolean receiptEmailable;
     private boolean busy;
 
     public BillingFrame() {
@@ -150,12 +153,21 @@ public final class BillingFrame extends JFrame {
         receiptTextArea.setMargin(new Insets(16, 18, 16, 18));
         receiptTextArea.setLineWrap(false);
 
+        recipientEmailField = createTextField();
+        recipientEmailField.setToolTipText(
+                "Enter the email address that should receive the final receipt."
+        );
+
         generateBillButton = createPrimaryButton("Generate Bill", 145);
         clearButton = createSecondaryButton("Clear", 105);
         backButton = createSecondaryButton("Back to Dashboard", 170);
         printReceiptButton = createSecondaryButton("Print Receipt", 135);
+        emailReceiptButton = createSecondaryButton("Email Receipt", 135);
         printReceiptButton.setToolTipText(
                 "Generate a bill before printing its final receipt."
+        );
+        emailReceiptButton.setToolTipText(
+                "Generate a bill before emailing its final receipt."
         );
     }
 
@@ -304,7 +316,19 @@ public final class BillingFrame extends JFrame {
 
         card.add(titleLabel, BorderLayout.NORTH);
         card.add(scrollPane, BorderLayout.CENTER);
+        card.add(createEmailPanel(), BorderLayout.SOUTH);
         return card;
+    }
+
+    private JPanel createEmailPanel() {
+        JPanel emailPanel = new JPanel(new BorderLayout(10, 0));
+        emailPanel.setOpaque(false);
+
+        JLabel recipientLabel = createFormLabel("Recipient Email");
+        emailPanel.add(recipientLabel, BorderLayout.WEST);
+        emailPanel.add(recipientEmailField, BorderLayout.CENTER);
+        emailPanel.add(emailReceiptButton, BorderLayout.EAST);
+        return emailPanel;
     }
 
     private JPanel createSectionCard(String title) {
@@ -417,18 +441,21 @@ public final class BillingFrame extends JFrame {
 
         calculationLoaded = true;
         billGenerated = false;
+        receiptEmailable = false;
         applyControlState();
     }
 
     public void markBillGenerated() {
         billGenerated = true;
         receiptPrintable = true;
+        receiptEmailable = true;
         applyControlState();
     }
 
     public void markDuplicateBill() {
         billGenerated = true;
         receiptPrintable = false;
+        receiptEmailable = false;
         applyControlState();
     }
 
@@ -461,10 +488,12 @@ public final class BillingFrame extends JFrame {
         for (JTextField field : fields) {
             field.setText("");
         }
+        recipientEmailField.setText("");
 
         calculationLoaded = false;
         billGenerated = false;
         receiptPrintable = false;
+        receiptEmailable = false;
         applyControlState();
     }
 
@@ -491,6 +520,10 @@ public final class BillingFrame extends JFrame {
         return searchField.getText();
     }
 
+    public String getRecipientEmail() {
+        return recipientEmailField.getText();
+    }
+
     public void addSearchListener(ActionListener listener) {
         searchButton.addActionListener(listener);
         searchField.addActionListener(listener);
@@ -510,6 +543,10 @@ public final class BillingFrame extends JFrame {
 
     public void addPrintReceiptListener(ActionListener listener) {
         printReceiptButton.addActionListener(listener);
+    }
+
+    public void addEmailReceiptListener(ActionListener listener) {
+        emailReceiptButton.addActionListener(listener);
     }
 
     /**
@@ -561,8 +598,10 @@ public final class BillingFrame extends JFrame {
         );
         clearButton.setEnabled(!busy);
         backButton.setEnabled(!busy);
+        recipientEmailField.setEnabled(!busy);
 
         printReceiptButton.setEnabled(!busy && receiptPrintable);
+        emailReceiptButton.setEnabled(!busy && receiptEmailable);
     }
 
     private String formatCurrency(BigDecimal value) {

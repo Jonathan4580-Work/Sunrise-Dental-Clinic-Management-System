@@ -5,6 +5,8 @@ import com.mycompany.sunrisedentalclinicmanagementsystem.model.BillingCalculatio
 import com.mycompany.sunrisedentalclinicmanagementsystem.model.GeneratedBill;
 import com.mycompany.sunrisedentalclinicmanagementsystem.service.BillingException;
 import com.mycompany.sunrisedentalclinicmanagementsystem.service.BillingService;
+import com.mycompany.sunrisedentalclinicmanagementsystem.service.ReceiptEmailException;
+import com.mycompany.sunrisedentalclinicmanagementsystem.service.ReceiptEmailService;
 import com.mycompany.sunrisedentalclinicmanagementsystem.ui.BillingFrame;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -36,11 +38,13 @@ public final class BillingController {
 
     private final BillingFrame frame;
     private final BillingService billingService;
+    private final ReceiptEmailService receiptEmailService;
     private final String authenticatedUsername;
     private final Runnable returnToDashboardAction;
 
     private BillingCalculation currentCalculation;
     private GeneratedBill currentGeneratedBill;
+    private String currentFinalReceiptText;
     private boolean returningToDashboard;
 
     /**
@@ -53,6 +57,7 @@ public final class BillingController {
         this(
                 new BillingFrame(),
                 new BillingService(),
+                new ReceiptEmailService(),
                 authenticatedUsername,
                 returnToDashboardAction
         );
@@ -61,6 +66,7 @@ public final class BillingController {
     BillingController(
             BillingFrame frame,
             BillingService billingService,
+            ReceiptEmailService receiptEmailService,
             String authenticatedUsername,
             Runnable returnToDashboardAction
     ) {
@@ -68,6 +74,10 @@ public final class BillingController {
         this.billingService = Objects.requireNonNull(
                 billingService,
                 "billingService must not be null"
+        );
+        this.receiptEmailService = Objects.requireNonNull(
+                receiptEmailService,
+                "receiptEmailService must not be null"
         );
         this.authenticatedUsername = Objects.requireNonNull(
                 authenticatedUsername,
@@ -97,6 +107,7 @@ public final class BillingController {
         frame.addClearListener(event -> clear());
         frame.addBackListener(event -> returnToDashboard());
         frame.addPrintReceiptListener(event -> printReceipt());
+        frame.addEmailReceiptListener(event -> emailReceipt());
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent event) {
@@ -108,6 +119,7 @@ public final class BillingController {
     private void calculateBill() {
         currentCalculation = null;
         currentGeneratedBill = null;
+        currentFinalReceiptText = null;
         frame.clearDetails();
         frame.setReceiptText(receiptLoadingMessage());
         frame.setBusy(true, "Searching appointment and calculating bill...");
@@ -164,9 +176,10 @@ public final class BillingController {
                     GeneratedBill generatedBill = get();
                     currentGeneratedBill = generatedBill;
                     currentCalculation = generatedBill.calculation();
+                    currentFinalReceiptText = buildFinalReceipt(generatedBill);
                     frame.displayCalculation(currentCalculation);
                     frame.markBillGenerated();
-                    frame.setReceiptText(buildFinalReceipt(generatedBill));
+                    frame.setReceiptText(currentFinalReceiptText);
                     frame.setBusy(false, "Bill generated successfully.");
                     frame.showSuccessMessage(
                             "Bill generated successfully.\n\n"
@@ -187,7 +200,53 @@ public final class BillingController {
     private void clear() {
         currentCalculation = null;
         currentGeneratedBill = null;
+        currentFinalReceiptText = null;
         frame.clearForm();
+    }
+
+    private void emailReceipt() {
+        if (currentGeneratedBill == null
+                || currentFinalReceiptText == null
+                || currentFinalReceiptText.isBlank()) {
+            return;
+        }
+
+        String recipientEmail = frame.getRecipientEmail();
+        frame.setBusy(true, "Sending receipt...");
+
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws ReceiptEmailException {
+                receiptEmailService.sendReceipt(
+                        recipientEmail,
+                        currentGeneratedBill,
+                        currentFinalReceiptText
+                );
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    frame.setBusy(false, "Receipt email sent successfully.");
+                    frame.showInformationMessage(
+                            "Receipt Email",
+                            "Receipt email sent successfully."
+                    );
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    frame.setBusy(false, "Receipt email interrupted.");
+                    frame.showErrorMessage(
+                            "Email Interrupted",
+                            "The receipt email operation was interrupted. Please try again."
+                    );
+                } catch (ExecutionException exception) {
+                    frame.setBusy(false, "Unable to email receipt.");
+                    handleEmailFailure(exception.getCause());
+                }
+            }
+        }.execute();
     }
 
     private void printReceipt() {
@@ -244,6 +303,31 @@ public final class BillingController {
                 "Billing Operation Failed",
                 "The billing operation could not be completed. Please try again."
         );
+    }
+
+    private void handleEmailFailure(Throwable failure) {
+        if (failure instanceof ReceiptEmailException exception) {
+            frame.showErrorMessage(
+                    emailErrorTitle(exception.getReason()),
+                    exception.getMessage()
+            );
+            return;
+        }
+
+        frame.showErrorMessage(
+                "Unable to Email Receipt",
+                "The receipt could not be emailed. Please try again."
+        );
+    }
+
+    private String emailErrorTitle(ReceiptEmailException.Reason reason) {
+        return switch (reason) {
+            case VALIDATION -> "Check Recipient Email";
+            case NOT_CONFIGURED -> "Email Service Not Configured";
+            case AUTHENTICATION_FAILURE -> "Email Service Authentication Failed";
+            case PROVIDER_REJECTED -> "Email Not Accepted";
+            case NETWORK_FAILURE -> "Email Service Unavailable";
+        };
     }
 
     private String errorTitle(BillingException.Reason reason) {
